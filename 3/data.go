@@ -107,7 +107,7 @@ func split(data []Row, seed uint64) (train, test []Row, err error) {
 
 type Scaler struct{ Mean, Scale []float64 }
 
-func fitScaler(data []Row) Scaler {
+func fitScaler(data []Row) (Scaler, error) {
 	s := Scaler{make([]float64, len(data[0].X)), make([]float64, len(data[0].X))}
 	for _, row := range data {
 		for j, x := range row.X {
@@ -122,11 +122,14 @@ func fitScaler(data []Row) Scaler {
 	}
 	for j := range s.Scale {
 		s.Scale[j] = math.Sqrt(s.Scale[j])
+		if !finite(s.Mean[j]) || !finite(s.Scale[j]) {
+			return Scaler{}, fmt.Errorf("переполнение среднего или масштаба признака %d при нормализации", j+1)
+		}
 		if s.Scale[j] == 0 {
 			s.Scale[j] = 1
 		}
 	}
-	return s
+	return s, nil
 }
 
 func (s Scaler) transform(x []float64) ([]float64, error) {
@@ -139,6 +142,9 @@ func (s Scaler) transform(x []float64) ([]float64, error) {
 			return nil, fmt.Errorf("неконечный признак")
 		}
 		z[j] = (value - s.Mean[j]) / s.Scale[j]
+		if !finite(z[j]) {
+			return nil, fmt.Errorf("переполнение при нормализации признака %d", j+1)
+		}
 	}
 	return z, nil
 }

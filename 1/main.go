@@ -101,6 +101,7 @@ func readCSV(r io.Reader, labeled bool, expectedFeatures []string) ([]Sample, []
 	if err != nil {
 		return nil, nil, fmt.Errorf("заголовок CSV: %w", err)
 	}
+	header[0] = strings.TrimPrefix(header[0], "\ufeff")
 	features := len(header)
 	if labeled {
 		features--

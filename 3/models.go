@@ -16,7 +16,10 @@ func TrainLinear(data []Row, rate float64, epochs int) (LinearRegression, []floa
 	if len(data[0].X) != 1 || !finite(rate) || rate <= 0 || epochs <= 0 {
 		return model, nil, fmt.Errorf("линейная модель требует один признак, rate > 0 и epochs > 0")
 	}
-	scaler := fitScaler(data)
+	scaler, err := fitScaler(data)
+	if err != nil {
+		return model, nil, err
+	}
 	meanY := 0.0
 	for _, row := range data {
 		meanY += row.Y / float64(len(data))
@@ -26,6 +29,9 @@ func TrainLinear(data []Row, rate float64, epochs int) (LinearRegression, []floa
 		scaleY += (row.Y - meanY) * (row.Y - meanY) / float64(len(data))
 	}
 	scaleY = math.Sqrt(scaleY)
+	if !finite(meanY) || !finite(scaleY) {
+		return model, nil, fmt.Errorf("переполнение среднего или масштаба целевых значений при нормализации")
+	}
 	if scaleY == 0 {
 		scaleY = 1
 	}
@@ -81,11 +87,18 @@ func TrainLogistic(data []Row, rate float64, epochs int) (LogisticRegression, []
 	if !finite(rate) || rate <= 0 || epochs <= 0 {
 		return m, nil, fmt.Errorf("нужны rate > 0 и epochs > 0")
 	}
+	scaler, err := fitScaler(data)
+	if err != nil {
+		return m, nil, err
+	}
 	m.Weights = make([]float64, len(data[0].X))
-	m.Scaler = fitScaler(data)
+	m.Scaler = scaler
 	standardized := make([][]float64, len(data))
 	for i, row := range data {
-		standardized[i], _ = m.Scaler.transform(row.X)
+		standardized[i], err = m.Scaler.transform(row.X)
+		if err != nil {
+			return m, nil, err
+		}
 	}
 	history := make([]float64, 0, epochs)
 	for epoch := 0; epoch < epochs; epoch++ {
