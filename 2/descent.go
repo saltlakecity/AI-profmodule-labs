@@ -25,7 +25,6 @@ func move(p, g Point, alpha float64) Point {
 	return Point{p.X - alpha*g.X, p.Y - alpha*g.Y}
 }
 
-// На выпуклом сечении минимум достигается при grad(f(p-alpha*g)) · g = 0.
 func optimalStep(objective Objective, p, g Point) (float64, error) {
 	directional := func(alpha float64) float64 { return dot(objective.Grad(move(p, g, alpha)), g) }
 	left, right := 0.0, 1.0

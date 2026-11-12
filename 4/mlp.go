@@ -6,7 +6,6 @@ import (
 	"math/rand/v2"
 )
 
-// Два обучаемых слоя: Input -> tanh(Hidden) -> Linear(2).
 type MLP struct {
 	Inputs, Hidden int
 	Parameters     []float64
@@ -60,14 +59,12 @@ func sign(x float64) float64 {
 	return 0
 }
 
-func (m MLP) accumulateGradient(x []float64, target [2]float64, hidden, gradient []float64) float64 {
+func (m MLP) accumulateGradient(x []float64, target [2]float64, hidden, gradient []float64) {
 	output := m.forward(x, hidden)
 	var delta [2]float64
-	loss := 0.0
 	offset := m.Hidden * (m.Inputs + 1)
 	for k := 0; k < 2; k++ {
 		diff := output[k] - target[k]
-		loss += math.Abs(diff) / 2
 		delta[k] = sign(diff) / 2
 		base := offset + k*(m.Hidden+1)
 		for j, value := range hidden {
@@ -87,27 +84,26 @@ func (m MLP) accumulateGradient(x []float64, target [2]float64, hidden, gradient
 		}
 		gradient[base+m.Inputs] += dh
 	}
-	return loss
 }
 
-func TrainMLP(m *MLP, data []Example, epochs int, rate float64) ([]float64, error) {
+func TrainMLP(m *MLP, data []Example, epochs int, rate float64) error {
 	if len(data) == 0 || epochs < 1 || !finite(rate) || rate <= 0 {
-		return nil, fmt.Errorf("MLP: нужны выборка, epochs > 0 и rate > 0")
+		return fmt.Errorf("MLP: нужны выборка, epochs > 0 и rate > 0")
 	}
 	if m == nil || m.Inputs < 1 || m.Hidden < 1 || len(m.Parameters) != m.Hidden*(m.Inputs+1)+2*(m.Hidden+1) {
-		return nil, fmt.Errorf("некорректная архитектура MLP")
+		return fmt.Errorf("некорректная архитектура MLP")
 	}
 	for _, row := range data {
 		if len(row.Input) != m.Inputs {
-			return nil, fmt.Errorf("MLP: неверное число признаков")
+			return fmt.Errorf("MLP: неверное число признаков")
 		}
 		for _, x := range row.Input {
 			if !finite(x) {
-				return nil, fmt.Errorf("MLP: неконечный признак")
+				return fmt.Errorf("MLP: неконечный признак")
 			}
 		}
 		if !finite(row.Target[0]) || !finite(row.Target[1]) {
-			return nil, fmt.Errorf("MLP: неконечная цель")
+			return fmt.Errorf("MLP: неконечная цель")
 		}
 	}
 	gradient, firstMoment, secondMoment := make([]float64, len(m.Parameters)), make([]float64, len(m.Parameters)), make([]float64, len(m.Parameters))
@@ -118,7 +114,6 @@ func TrainMLP(m *MLP, data []Example, epochs int, rate float64) ([]float64, erro
 	}
 	rng := rand.New(rand.NewPCG(42, 43))
 	beta1Power, beta2Power := 1.0, 1.0
-	history := make([]float64, 0, epochs)
 	const batchSize = 64
 	for epoch := 0; epoch < epochs; epoch++ {
 		rng.Shuffle(len(indices), func(i, j int) { indices[i], indices[j] = indices[j], indices[i] })
@@ -139,7 +134,7 @@ func TrainMLP(m *MLP, data []Example, epochs int, rate float64) ([]float64, erro
 				correctedV := secondMoment[j] / (1 - beta2Power)
 				m.Parameters[j] -= rate * correctedM / (math.Sqrt(correctedV) + 1e-8)
 				if !finite(m.Parameters[j]) {
-					return history, fmt.Errorf("MLP: обучение расходится; уменьшите rate")
+					return fmt.Errorf("MLP: обучение расходится; уменьшите rate")
 				}
 			}
 		}
@@ -149,11 +144,10 @@ func TrainMLP(m *MLP, data []Example, epochs int, rate float64) ([]float64, erro
 			loss += (math.Abs(pred[0]-row.Target[0]) + math.Abs(pred[1]-row.Target[1])) / (2 * float64(len(data)))
 		}
 		if !finite(loss) {
-			return history, fmt.Errorf("MLP: неконечная ошибка обучения")
+			return fmt.Errorf("MLP: неконечная ошибка обучения")
 		}
-		history = append(history, loss)
 	}
-	return history, nil
+	return nil
 }
 
 func predictWeather(m MLP, x []float64, xScaler, yScaler Scaler) ([2]float64, error) {

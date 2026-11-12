@@ -126,7 +126,7 @@ func run() error {
 		return err
 	}
 	allCorrect := allMetrics.Confusion[0][0] + allMetrics.Confusion[1][1]
-	fmt.Printf("\nТЕСТИРОВАНИЕ ВСЕЙ ВЫБОРКИ (leave-one-out)\nКаждый объект исключается из обучения перед своим прогнозом\nПравильных: %d; ошибок: %d\n", allCorrect, len(data)-allCorrect)
+	fmt.Printf("\nТЕСТИРОВАНИЕ ВСЕЙ ВЫБОРКИ\nПравильных: %d; ошибок: %d\n", allCorrect, len(data)-allCorrect)
 	printMetrics(allMetrics)
 	return nil
 }

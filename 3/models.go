@@ -112,7 +112,6 @@ func TrainLogistic(data []Row, rate float64, epochs int) (LogisticRegression, []
 			for j, x := range standardized[i] {
 				z += m.Weights[j] * x
 			}
-			// log(1+exp(z))-y*z без переполнения экспоненты.
 			loss += (max(z, 0) - row.Y*z + math.Log1p(math.Exp(-math.Abs(z)))) / float64(len(data))
 		}
 		if !finite(loss) {

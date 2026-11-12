@@ -1,11 +1,7 @@
 package main
 
 import (
-	"encoding/csv"
-	"fmt"
 	"image/color"
-	"os"
-	"strconv"
 
 	"gonum.org/v1/plot"
 	"gonum.org/v1/plot/plotter"
@@ -22,24 +18,6 @@ func (g functionGrid) Dims() (int, int)   { return 100, 100 }
 func (g functionGrid) X(c int) float64    { return g.xmin + float64(c)*(g.xmax-g.xmin)/99 }
 func (g functionGrid) Y(r int) float64    { return g.ymin + float64(r)*(g.ymax-g.ymin)/99 }
 func (g functionGrid) Z(c, r int) float64 { return g.objective.Value(Point{g.X(c), g.Y(r)}) }
-
-func saveTrajectory(path string, steps []DescentStep) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	w := csv.NewWriter(f)
-	rows := [][]string{{"iteration", "x", "y", "value", "gradient_norm", "alpha"}}
-	for i, s := range steps {
-		rows = append(rows, []string{strconv.Itoa(i), fmt.Sprintf("%.12g", s.X), fmt.Sprintf("%.12g", s.Y), fmt.Sprintf("%.12g", s.Value), fmt.Sprintf("%.12g", s.GradNorm), fmt.Sprintf("%.12g", s.Alpha)})
-	}
-	err = w.WriteAll(rows)
-	closeErr := f.Close()
-	if err != nil {
-		return err
-	}
-	return closeErr
-}
 
 func savePlot(path string, objective Objective, trajectories [][]DescentStep, names []string) error {
 	p := plot.New()
@@ -80,10 +58,10 @@ func savePlot(path string, objective Objective, trajectories [][]DescentStep, na
 			return err
 		}
 		s.Radius = vg.Points(5)
-		label := "Start"
+		label := "Начальная точка"
 		s.Shape, s.Color = draw.CircleGlyph{}, color.Black
 		if i == 1 {
-			label, s.Shape, s.Color = "Minimum", draw.CrossGlyph{}, color.RGBA{G: 140, A: 255}
+			label, s.Shape, s.Color = "Минимум", draw.CrossGlyph{}, color.RGBA{G: 140, A: 255}
 		}
 		p.Add(s)
 		p.Legend.Add(label, s)

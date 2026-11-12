@@ -31,7 +31,7 @@ func run() error {
 	rootLimit := flag.Int("root-limit", 100, "максимум итераций поиска корня")
 	descentLimit := flag.Int("descent-limit", 1000, "максимум итераций спуска")
 	rate := flag.Float64("rate", 0.1, "постоянный шаг градиентного спуска")
-	out := flag.String("out", "results", "папка графиков и CSV")
+	out := flag.String("out", "results", "папка графиков")
 	flag.Parse()
 	f := func(x float64) float64 { return x*x*x - x - 2 }
 	df := func(x float64) float64 { return 3*x*x - 1 }
@@ -91,10 +91,7 @@ func run() error {
 		return err
 	}
 	printDescent("ГРАДИЕНТНЫЙ СПУСК", bowl, path, elapsed)
-	if err := saveTrajectory(filepath.Join(*out, "gradient.csv"), path); err != nil {
-		return err
-	}
-	if err := savePlot(filepath.Join(*out, "gradient.png"), bowl, [][]DescentStep{path}, []string{"Gradient descent"}); err != nil {
+	if err := savePlot(filepath.Join(*out, "gradient.png"), bowl, [][]DescentStep{path}, []string{"Градиентный спуск"}); err != nil {
 		return err
 	}
 	fmt.Printf("\nЗАДАНИЕ 3. СРАВНЕНИЕ МЕТОДОВ СПУСКА\nf(x,y) = %s\nГрадиент = (8x-4, 2y-2)\nНачало: (5,5); alpha обычного спуска = %g; epsilon = %g; лимит = %d\nТеоретический минимум: (0.5,1); f = %g\n", comparisonBowl.Name, *rate, *eps, *descentLimit, comparisonBowl.Value(comparisonBowl.Minimum))
@@ -109,11 +106,8 @@ func run() error {
 			return err
 		}
 		printDescent(descentNames[i], comparisonBowl, paths[i], times[i])
-		if err := saveTrajectory(filepath.Join(*out, []string{"comparison_gradient.csv", "comparison_steepest.csv"}[i]), paths[i]); err != nil {
-			return err
-		}
 	}
-	if err := savePlot(filepath.Join(*out, "comparison.png"), comparisonBowl, paths, []string{"Gradient descent", "Steepest descent"}); err != nil {
+	if err := savePlot(filepath.Join(*out, "comparison.png"), comparisonBowl, paths, []string{"Градиентный спуск", "Наискорейший спуск"}); err != nil {
 		return err
 	}
 	fmt.Println("\nИТОГОВОЕ СРАВНЕНИЕ\nМетод\tИтерации\tf(x*)\tОшибка координат (L2)\tВремя, ms")
@@ -121,7 +115,7 @@ func run() error {
 		s := steps[len(steps)-1]
 		fmt.Printf("%s\t%d\t%.9f\t%.9g\t%.3f\n", descentNames[i], len(steps)-1, s.Value, math.Hypot(s.X-0.5, s.Y-1), float64(times[i])/float64(time.Millisecond))
 	}
-	fmt.Printf("Разница итераций: %d; ускорение по числу итераций: %s\nГрафики и траектории: %s\n", len(paths[0])-len(paths[1]), formatIterationRatio(len(paths[0])-1, len(paths[1])-1), *out)
+	fmt.Printf("Разница итераций: %d; ускорение по числу итераций: %s\nГрафики: %s\n", len(paths[0])-len(paths[1]), formatIterationRatio(len(paths[0])-1, len(paths[1])-1), *out)
 	return nil
 }
 

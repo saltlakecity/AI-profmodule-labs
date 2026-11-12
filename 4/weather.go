@@ -19,10 +19,9 @@ type Weather struct {
 }
 
 type Example struct {
-	Date     time.Time
-	Input    []float64
-	Target   [2]float64
-	Previous [2]float64
+	Date   time.Time
+	Input  []float64
+	Target [2]float64
 }
 
 func finite(x float64) bool { return !math.IsNaN(x) && !math.IsInf(x, 0) }
@@ -86,10 +85,9 @@ func makeExamples(days []Weather) []Example {
 	data := make([]Example, 0, len(days)-lookback)
 	for i := lookback; i < len(days); i++ {
 		data = append(data, Example{
-			Date:     days[i].Date,
-			Input:    features(days[i-lookback:i], days[i].Date),
-			Target:   [2]float64{days[i].Temperature, days[i].Precipitation},
-			Previous: [2]float64{days[i-1].Temperature, days[i-1].Precipitation},
+			Date:   days[i].Date,
+			Input:  features(days[i-lookback:i], days[i].Date),
+			Target: [2]float64{days[i].Temperature, days[i].Precipitation},
 		})
 	}
 	return data
